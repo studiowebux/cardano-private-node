@@ -1,6 +1,12 @@
 # Start the stack
 
+```bash
 cd /opt/local-private-cardano
+
+git clone https://github.com/studiowebux/cardano-private-node.git
+
+echo 'postgres:5432:cexplorer:postgres:example' > infrastructure-resources/dbsync/config/pg_passwd
+chmod 0600 infrastructure-resources/dbsync/config/pg_passwd
 
 docker compose build
 docker compose up -d
@@ -17,8 +23,13 @@ docker compose logs cardano-db-sync postgres -f
 docker compose stats
 # has the message, you can skip the indexes.
 docker compose restart cardano-db-sync
+```
 
 # Using your favorite SQL IDE
+
+```bash
+docker compose run -it postgres psql -d cexplorer -h postgres -U postgres
+```
 
 ```sql
 CREATE INDEX IF NOT EXISTS bf_idx_block_hash_encoded ON block USING HASH (encode(hash, 'hex'));
@@ -46,6 +57,8 @@ CREATE INDEX IF NOT EXISTS bf_idx_reward_rest_spendable_epoch ON reward_rest USI
 launch the bootstrap.sh commands
 
 ```bash
+docker exec -it -w /app/cardano-node/ launcher bash
+
 cardano-cli signing-key-address \
     --testnet-magic 42 \
     --secret /app/cardano-node/example/byron-gen-command/genesis-keys.000.key > /app/cardano-node/example/byron-gen-command/genesis-keys.000.addr
@@ -59,17 +72,6 @@ cardano-cli signing-key-address \
     --secret /app/cardano-node/example/byron-gen-command/genesis-keys.002.key > /app/cardano-node/example/byron-gen-command/genesis-keys.002.addr
 
 mkdir -p /app/appdata/wallets/
-
-cardano-cli address key-gen \
---verification-key-file /app/appdata/wallets/payment.vkey \
---signing-key-file /app/appdata/wallets/payment.skey
-
-cardano-cli address build \
---payment-verification-key-file /app/appdata/wallets/payment.vkey \
---out-file /app/appdata/wallets/payment.addr \
---testnet-magic 42
-
-cardano-cli query utxo --address $(cat /app/appdata/wallets/payment.addr) --testnet-magic 42
 
 cardano-cli address build \
 --payment-verification-key-file /app/cardano-node/example/utxo-keys/utxo1.vkey \
@@ -91,8 +93,8 @@ cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo3.addr) --testne
 ```
 
 ```bash
-sudo cat appdata/wallets/utxo1.addr
-sudo cat cluster/utxo-keys/utxo1.skey
+cat /app/appdata/wallets/utxo1.addr
+cat /app/cardano-node/example/utxo-keys/utxo1.skey
 ```
 
 copy the skey in the faucet-ui .env file
