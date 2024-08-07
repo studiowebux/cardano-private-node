@@ -151,6 +151,7 @@ services:
       - BLOCKFROST_CONFIG_DBSYNC_MAX_CONN=10
       - BLOCKFROST_CONFIG_TOKEN_REGISTRY_URL=http://token-registry:5678
       - BLOCKFROST_CONFIG_NETWORK=testnet
+      - BLOCKFROST_MITHRIL_ENABLED=false
 
   # It does actually nothing, but it was blocking the blockfrost and nami wallet
   token-registry:
