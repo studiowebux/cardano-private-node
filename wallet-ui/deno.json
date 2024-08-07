@@ -1,0 +1,15 @@
+{
+  "imports": {
+    "hono": "jsr:@hono/hono@^4.5.0",
+    "@hono/zod-validator": "npm:@hono/zod-validator",
+    "zod": "npm:zod",
+    "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts"
+  },
+  "tasks": {
+    "start": "deno run --allow-net --allow-read --allow-env --allow-write --allow-run --watch src/bin/main.tsx"
+  },
+  "compilerOptions": {
+    "jsx": "precompile",
+    "jsxImportSource": "hono/jsx"
+  }
+}

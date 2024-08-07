@@ -1,0 +1,40 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@hono/hono@^4.5.0": "jsr:@hono/hono@4.5.0",
+      "npm:@hono/zod-validator": "npm:@hono/zod-validator@0.2.2_hono@4.4.8_zod@3.23.8",
+      "npm:zod": "npm:zod@3.23.8"
+    },
+    "jsr": {
+      "@hono/hono@4.5.0": {
+        "integrity": "4a410f7773ac4b5b0eb4520b26c7ab7795a271d57a9df7fa1953ded6b90ccaf7"
+      }
+    },
+    "npm": {
+      "@hono/zod-validator@0.2.2_hono@4.4.8_zod@3.23.8": {
+        "integrity": "sha512-dSDxaPV70Py8wuIU2QNpoVEIOSzSXZ/6/B/h4xA7eOMz7+AarKTSGV8E6QwrdcCbBLkpqfJ4Q2TmBO0eP1tCBQ==",
+        "dependencies": {
+          "hono": "hono@4.4.8",
+          "zod": "zod@3.23.8"
+        }
+      },
+      "hono@4.4.8": {
+        "integrity": "sha512-eewnSgTzdWgFVn97kPV24h+9UVNUQ+9mj6IRxr7dBseTaTBSHtFo/T/vRNcqJkQFysVoXyecflr3Xe/fdvzEpQ==",
+        "dependencies": {}
+      },
+      "zod@3.23.8": {
+        "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {},
+  "workspace": {
+    "dependencies": [
+      "jsr:@hono/hono@^4.5.0",
+      "npm:@hono/zod-validator",
+      "npm:zod"
+    ]
+  }
+}
