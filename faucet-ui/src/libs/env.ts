@@ -10,4 +10,11 @@ type Env = {
   BLOCKFROST_BASE_URL: string;
   BLOCKFROST_API_KEY: string;
 };
-export const env: Env = (await load()) as Env;
+
+async function load_env() {
+  if (Deno.env.get("NODE_ENV") !== "production") {
+    return (await load()) as Env;
+  }
+  return Deno.env.toObject() as Env;
+}
+export const env: Env = await load_env();
