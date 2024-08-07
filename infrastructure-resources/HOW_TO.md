@@ -5,7 +5,6 @@ cd /opt/local-private-cardano
 
 git clone https://github.com/studiowebux/cardano-private-node.git
 
-echo 'postgres:5432:cexplorer:postgres:example' > infrastructure-resources/dbsync/config/pg_passwd
 chmod 0600 -R infrastructure-resources/dbsync/config/
 
 docker compose build
@@ -109,7 +108,7 @@ GENESIS_ADDRESS=
 GENESIS_PRIVATE_KEY=
 ```
 
-docker compose restart faucet-ui
+docker compose up -d
 
 ---
 

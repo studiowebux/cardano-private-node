@@ -12,7 +12,7 @@ RUN curl -OL https://github.com/IntersectMBO/cardano-node/releases/download/9.1.
 RUN ln -s /app/bin/cardano-cli /usr/local/bin/cardano-cli && \
     ln -s /app/bin/cardano-node /usr/local/bin/cardano-node
 
-RUN git clone https://github.com/IntersectMBO/cardano-node.git
+RUN git clone https://github.com/IntersectMBO/cardano-node.git && git checkout 9.1.0
 
 RUN echo 'byronGenesisHash=$(cardano-cli byron genesis print-genesis-hash --genesis-json ./example/genesis/byron/genesis.json)' >> cardano-node/scripts/babbage/mkfiles.sh &&\
     echo 'echo "ByronGenesisHash: $byronGenesisHash" >> ./example/configuration.yaml' >> cardano-node/scripts/babbage/mkfiles.sh
