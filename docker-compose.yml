@@ -76,9 +76,6 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     command: ${POSTGRES_ARGS:--c maintenance_work_mem=8GB -c max_parallel_maintenance_workers=8}
 
-  # 2024-07-28, I had to start it using : 13.2.0.2 (but it wont start due to bad configuration, need further investigation)
-  # otherwise the instant_reward table is missing and blockfrost-ryi and the custom nami wallet are broken.
-  # # 13.3.0.0 seems to delete the table I need. (it is documented tho, so will stick to 13.2.0.2 for this week as chang / conway is pretty recent)
   cardano-db-sync:
     image: ghcr.io/intersectmbo/cardano-db-sync:13.3.0.0
     container_name: dbsync
@@ -138,22 +135,22 @@ services:
 
   # https://blockfrost.dev/api/blockfrost-io-api-documentation
   blockfrost-ryo:
-    image: blockfrost/backend-ryo:v2.0.3
+    image: blockfrost/backend-ryo:v2.1.0
     container_name: blockfrost-ryi
     ports:
-      - 3010:3000
+      - 3010:3010
     environment:
-      - NODE_ENV=development
       - BLOCKFROST_CONFIG_SERVER_LISTEN_ADDRESS=0.0.0.0
-      - BLOCKFROST_CONFIG_SERVER_PORT=3000
+      - BLOCKFROST_CONFIG_SERVER_PORT=3010
       - BLOCKFROST_CONFIG_SERVER_DEBUG=true
       - BLOCKFROST_CONFIG_SERVER_PROMETHEUS_METRICS=true
       - BLOCKFROST_CONFIG_DBSYNC_HOST=postgres
       - BLOCKFROST_CONFIG_DBSYNC_USER=postgres
+      - BLOCKFROST_CONFIG_DBSYNC_PASSWORD=example
       - BLOCKFROST_CONFIG_DBSYNC_DATABASE=cexplorer
       - BLOCKFROST_CONFIG_DBSYNC_MAX_CONN=10
-      - BLOCKFROST_CONFIG_TOKEN_REGISTRY_URL=http://127.0.0.1:8080
-      - BLOCKFROST_CONFIG_NETWORK=private
+      - BLOCKFROST_CONFIG_TOKEN_REGISTRY_URL=http://token-registry:5678
+      - BLOCKFROST_CONFIG_NETWORK=testnet
 
   # It does actually nothing, but it was blocking the blockfrost and nami wallet
   token-registry:

@@ -6,9 +6,10 @@ cd /opt/local-private-cardano
 git clone https://github.com/studiowebux/cardano-private-node.git
 
 echo 'postgres:5432:cexplorer:postgres:example' > infrastructure-resources/dbsync/config/pg_passwd
-chmod 0600 infrastructure-resources/dbsync/config/pg_passwd
+chmod 0600 -R infrastructure-resources/dbsync/config/
 
 docker compose build
+cp faucet-ui/.env.example faucet-ui/.env
 docker compose up -d
 docker exec -it -w /app/cardano-node/ launcher bash -c "./scripts/babbage/mkfiles.sh"
 docker compose up -d
@@ -58,6 +59,8 @@ launch the bootstrap.sh commands
 
 ```bash
 docker exec -it -w /app/cardano-node/ launcher bash
+export CARDANO_NODE_SOCKET_PATH=/app/cardano-node/example/node-spo1/node.sock
+cardano-cli query tip --testnet-magic 42
 
 cardano-cli signing-key-address \
     --testnet-magic 42 \
@@ -99,10 +102,14 @@ cat /app/cardano-node/example/utxo-keys/utxo1.skey
 
 copy the skey in the faucet-ui .env file
 ```.env
-GENESIS_ADDRESS="..."
-# cat cardano-node/example/utxo-keys/utxo1.skey (minus the first 4 chars)
-GENESIS_PRIVATE_KEY="..."
+NODE_ENV=production
+# cat /app/appdata/wallets/utxo1.addr
+GENESIS_ADDRESS=
+# cat /app/cardano-node/example/utxo-keys/utxo1.skey (minus the first 4 chars)
+GENESIS_PRIVATE_KEY=
 ```
+
+docker compose restart faucet-ui
 
 ---
 
