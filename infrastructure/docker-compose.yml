@@ -1,0 +1,163 @@
+services:
+  launcher:
+    container_name: launcher
+    build:
+      context: .
+    volumes:
+      - ./cluster:/app/cardano-node/example
+      - ./appdata:/app/appdata
+
+  node1:
+    container_name: node1
+    build:
+      context: .
+    volumes:
+      - ./cluster:/app/cardano-node/example
+    working_dir: /app/cardano-node/
+    entrypoint: ./example/node-spo1.sh
+
+  node2:
+    container_name: node2
+    build:
+      context: .
+    volumes:
+      - ./cluster:/app/cardano-node/example
+    working_dir: /app/cardano-node/
+    entrypoint: ./example/node-spo2.sh
+
+  node3:
+    container_name: node3
+    build:
+      context: .
+    volumes:
+      - ./cluster:/app/cardano-node/example
+    working_dir: /app/cardano-node/
+    entrypoint: ./example/node-spo3.sh
+
+  ogmios:
+    container_name: ogmios
+    image: cardanosolutions/ogmios:v6.5.0
+    ports:
+      - 1337:1337
+    volumes:
+      - ./cluster:/app/cardano-node/example
+    command: "--node-socket /app/cardano-node/example/node-spo1/node.sock --node-config /app/cardano-node/example/configuration.yaml --host 0.0.0.0 --include-cbor"
+
+  kupo:
+    container_name: kupo
+    image: cardanosolutions/kupo:v2.9.0
+    volumes:
+      - ./kupo/db-mainnet:/db
+      - ./cluster:/app/cardano-node/example
+    ports:
+      - 1442:1442
+    command: "--node-socket /app/cardano-node/example/node-spo1/node.sock --node-config /app/cardano-node/example/configuration.yaml --host 0.0.0.0 --workdir /db --since origin --match addr_test1vq0vxepg89c784sjchzgank8u3s69sek4vmmel34gsau6pclv05ap --match f5b21ffadb04b8a2bf7ec7bbfb3490cbcc71d41c1cac19e2c138e7e5.*"
+
+  postgres:
+    image: postgres:14.10-alpine
+    container_name: dbsync_postgres
+    restart: always
+    ports:
+      - 5432:5432
+    healthcheck:
+      # Use pg_isready to check postgres is running. Substitute different
+      # user `postgres` if you've setup differently to config/pgpass-mainnet
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./dbsync/postgres/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_LOGGING: true
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: cexplorer
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: ${POSTGRES_ARGS:--c maintenance_work_mem=8GB -c max_parallel_maintenance_workers=8}
+
+  # 2024-07-28, I had to start it using : 13.2.0.2 (but it wont start due to bad configuration, need further investigation)
+  # otherwise the instant_reward table is missing and blockfrost-ryi and the custom nami wallet are broken.
+  # # 13.3.0.0 seems to delete the table I need. (it is documented tho, so will stick to 13.2.0.2 for this week as chang / conway is pretty recent)
+  cardano-db-sync:
+    image: ghcr.io/intersectmbo/cardano-db-sync:13.3.0.0
+    container_name: dbsync
+    environment:
+      - DISABLE_LEDGER=false
+      - EXTRA_DB_SYNC_ARGS=${EXTRA_DB_SYNC_ARGS:-}
+      - POSTGRES_PASS=/app/config/pg_passwd
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_PASSWORD=example
+      - POSTGRES_USER=postgres
+      - RESTORE_SNAPSHOT=${RESTORE_SNAPSHOT:-}
+      - RESTORE_RECREATE_DB=N
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./dbsync/cexplorer:/var/lib/cexplorer
+      - ./cluster:/app/cardano-node/example
+      - ./dbsync/config/:/app/config
+    restart: on-failure
+    # entrypoint: bash -c "sleep Infinity"
+    command: "--pg-pass-env POSTGRES_PASS --config /app/config/db-sync-config.json --socket-path /app/cardano-node/example/node-spo1/node.sock"
+
+  cardano-wallet:
+    container_name: cardano-wallet
+    image: cardanofoundation/cardano-wallet:2024.7.19
+    volumes:
+      - ./wallet-db:/wallet-db
+      - ./cluster:/app/cardano-node/example
+    ports:
+      - 8090:8090
+    entrypoint: []
+    command: bash -c "$$CMD --testnet /app/cardano-node/example/genesis/byron/genesis.json"
+    environment:
+      CMD: "cardano-wallet serve --node-socket /app/cardano-node/example/node-spo1/node.sock --database /wallet-db --listen-address 0.0.0.0"
+      NETWORK:
+    # user: ${USER_ID}
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        compress: "true"
+        max-file: "10"
+        max-size: "50m"
+
+  submit-api:
+    container_name: submit-api
+    build:
+      context: .
+    ports:
+      - 8191:8191
+    volumes:
+      - ./cluster:/app/cardano-node/example
+      - ./submit-api/submit-api.config:/config/submit-api.config:ro
+    command: /app/bin/cardano-submit-api --testnet-magic 42 --socket-path /app/cardano-node/example/node-spo1/node.sock --port 8191 --config /config/submit-api.config --listen-address 0.0.0.0
+
+  # https://blockfrost.dev/api/blockfrost-io-api-documentation
+  blockfrost-ryo:
+    image: blockfrost/backend-ryo:v2.0.3
+    container_name: blockfrost-ryi
+    ports:
+      - 3010:3000
+    environment:
+      - NODE_ENV=development
+      - BLOCKFROST_CONFIG_SERVER_LISTEN_ADDRESS=0.0.0.0
+      - BLOCKFROST_CONFIG_SERVER_PORT=3000
+      - BLOCKFROST_CONFIG_SERVER_DEBUG=true
+      - BLOCKFROST_CONFIG_SERVER_PROMETHEUS_METRICS=true
+      - BLOCKFROST_CONFIG_DBSYNC_HOST=postgres
+      - BLOCKFROST_CONFIG_DBSYNC_USER=postgres
+      - BLOCKFROST_CONFIG_DBSYNC_DATABASE=cexplorer
+      - BLOCKFROST_CONFIG_DBSYNC_MAX_CONN=10
+      - BLOCKFROST_CONFIG_TOKEN_REGISTRY_URL=http://127.0.0.1:8080
+      - BLOCKFROST_CONFIG_NETWORK=private
+
+  # It does actually nothing, but it was blocking the blockfrost and nami wallet
+  token-registry:
+    image: hashicorp/http-echo:latest
+    container_name: token-registry
+    ports:
+      - 8011:5678
+    command: ["-text=Hello, World!", "-listen=:5678"]

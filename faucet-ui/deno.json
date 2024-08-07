@@ -1,0 +1,20 @@
+{
+  "imports": {
+    "hono": "jsr:@hono/hono@^4.5.0",
+    "@hono/zod-validator": "npm:@hono/zod-validator",
+    "zod": "npm:zod",
+    "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
+    "@emurgo/cardano-serialization-lib-nodejs": "npm:@emurgo/cardano-serialization-lib-nodejs@12.0.0-beta.3",
+    "postgresjs": "https://deno.land/x/postgresjs@v3.4.4/mod.js"
+  },
+  "tasks": {
+    "start": "deno run --allow-net --allow-read --allow-env --allow-write --allow-run --watch src/bin/main.tsx"
+  },
+  "compilerOptions": {
+    "jsx": "precompile",
+    "jsxImportSource": "hono/jsx",
+    "types": [
+      "@emurgo/cardano-serialization-lib-nodejs/cardano_serialization_lib.d.ts"
+    ]
+  }
+}

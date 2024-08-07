@@ -1,0 +1,74 @@
+[source]
+type = "N2C"
+address = ["Unix", "./cardano.sock"]
+magic = "42"
+min_depth = 6
+
+[chain]
+byron_epoch_length  = 1
+byron_slot_length = 20
+byron_known_slot = 0
+byron_known_hash = ""
+byron_known_time = 1564010416
+shelley_epoch_length = 1
+shelley_slot_length = 1
+shelley_known_slot = 1598400
+shelley_known_hash = ""
+shelley_known_time = 1595967616
+address_hrp = "addr_test"
+adahandle_policy = ""
+
+[metrics]
+address = "0.0.0.0:9186"
+endpoint = "/metrics"
+
+# [intersect]
+# type = "Point"
+# value = [
+#     5615416,
+#     "5c5acbce21dbd752db67055c7704d2d3c2fb88255cb5a60d1f949e54bddbe1c6",
+# ]
+
+[[filters]]
+type = "Selection"
+
+[source.mapper]
+include_block_end_events = false
+include_transaction_details = true
+include_transaction_end_events = false
+include_block_cbor = false
+include_byron_ebb = false
+
+[cursor]
+type = "File"
+path = "./cursor"
+
+[filters.check]
+predicate = "any_of"
+
+[[filters.check.argument]]
+predicate = "policy_equals"
+argument = "9f66b5f07c3bb398ac2d8cf2bc9849e6e072a2b521ea9bd18f37df47"
+
+[[filters.check.argument]]
+predicate = "address_equals"
+argument = "addr_test1qp6pw42ukzdv2sqwf9k02e79epzwmnrr789kqpavr4xhh3fgz0u4ht45xghtfadcdleaylh965y6fwjkxx3l50dhp8nsacl4ks"
+
+# [sink]
+# type = "Webhook"
+# url = "http://localhost:5000/events"
+# authorization = "user:pass"
+# timeout = 30000
+# error_policy = "Continue"
+
+[sink]
+type = "Stdout"
+
+[sink.retry_policy]
+max_retries = 30
+backoff_unit =  5000
+backoff_factor = 2
+max_backoff = 100000
+
+[sink.headers]
+foo = "bar"
