@@ -1,7 +1,8 @@
 # Private cardano node + tools
 
-This is a simple private cardano node with a couple of tools to develop locally.
-Also a small UI to act as a faucet to get funds to test.
+This setup is a straightforward private Cardano cluster equipped with several tools for local development.
+It also includes a basic UI that functions as a faucet for obtaining test funds.
+Additionally, I tested and updated a fork of the NAMI wallet to ensure a working browser extension.
 
 ## Documentation
 
@@ -23,9 +24,10 @@ Also a small UI to act as a faucet to get funds to test.
 - Wallet-UI (Don't really need it anymore)
 - token-registry it is a placeholder API for NAMI
 
-- NAMI Fork: https://github.com/studiowebux/nami (You will have to change the IP to fit your setup)
+- NAMI Fork: https://github.com/studiowebux/nami (You will have to change the IP to fit your setup, see bottom of the readme for the steps.)
 
 ## Contribution
 
 - Feel free to open GitHub issues if you encounter any problems or have suggestions.
-- I began working on this two weeks ago, so it is still a work in progress. My primary focus has been on the components that I needed most.
+- I began working on this ~two~ few weeks ago, so it is still a work in progress.
+- My primary focus has been on the components that I needed most, cardano node, Ogmios, submit api, blockfrost RYO and DB Sync.

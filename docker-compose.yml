@@ -3,6 +3,8 @@ services:
     container_name: launcher
     build:
       context: .
+    environment:
+      CARDANO_NODE_SOCKET_PATH: /app/cardano-node/example/main.sock
     volumes:
       - ./cluster:/app/cardano-node/example
       - ./appdata:/app/appdata

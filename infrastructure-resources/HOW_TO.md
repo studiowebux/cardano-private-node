@@ -9,19 +9,23 @@ chmod 0600 -R infrastructure-resources/dbsync/config/
 
 docker compose build
 cp faucet-ui/.env.example faucet-ui/.env
+# The first time it will fail, this is expected.
 docker compose up -d
+# Running this command right after it showes failed to start, will setup the required files.
 docker exec -it -w /app/cardano-node/ launcher bash -c "./scripts/babbage/mkfiles.sh"
+# You have more or less 30 seconds to restart the cluster.
 docker compose up -d
+# Everything should show as UP
 docker compose ps -a
 
-docker exec -it launcher bash
-export CARDANO_NODE_SOCKET_PATH=/app/cardano-node/example/node-spo1/node.sock
-cardano-cli query tip --testnet-magic 42
+# After few seconds this command will show that the chain is synced.
+docker exec -it launcher bash -c "cardano-cli query tip --testnet-magic 42"
 
 # This one the first time will either get stuck or take a very very very long time.
+# DBSync can block the whole thing, as it is a test environemtn I simply restart it to skip the indexes (See youtube video for what it does.)
 docker compose logs cardano-db-sync postgres -f
 docker compose stats
-# has the message, you can skip the indexes.
+# You can skip the indexes. Doesn't work everytime the command is ran...
 docker compose restart cardano-db-sync
 ```
 
@@ -30,6 +34,8 @@ docker compose restart cardano-db-sync
 ```bash
 docker compose run -it postgres psql -d cexplorer -h postgres -U postgres
 ```
+
+These commands are provided by blockfrost-RYO:
 
 ```sql
 CREATE INDEX IF NOT EXISTS bf_idx_block_hash_encoded ON block USING HASH (encode(hash, 'hex'));
@@ -57,49 +63,46 @@ CREATE INDEX IF NOT EXISTS bf_idx_reward_rest_spendable_epoch ON reward_rest USI
 launch the bootstrap.sh commands
 
 ```bash
+# Open a console in the launcher container
 docker exec -it -w /app/cardano-node/ launcher bash
-export CARDANO_NODE_SOCKET_PATH=/app/cardano-node/example/node-spo1/node.sock
+
+# Launch the following commands to setup the faucet-ui:
+
+# 1. Check if the cluster is up and running
 cardano-cli query tip --testnet-magic 42
 
-cardano-cli signing-key-address \
-    --testnet-magic 42 \
-    --secret /app/cardano-node/example/byron-gen-command/genesis-keys.000.key > /app/cardano-node/example/byron-gen-command/genesis-keys.000.addr
-
-cardano-cli signing-key-address \
-    --testnet-magic 42 \
-    --secret /app/cardano-node/example/byron-gen-command/genesis-keys.001.key > /app/cardano-node/example/byron-gen-command/genesis-keys.001.addr
-
-cardano-cli signing-key-address \
-    --testnet-magic 42 \
-    --secret /app/cardano-node/example/byron-gen-command/genesis-keys.002.key > /app/cardano-node/example/byron-gen-command/genesis-keys.002.addr
-
+# Get the Addresses for each keys created by mkfiles.sh
 mkdir -p /app/appdata/wallets/
 
 cardano-cli address build \
 --payment-verification-key-file /app/cardano-node/example/utxo-keys/utxo1.vkey \
 --out-file /app/appdata/wallets/utxo1.addr \
 --testnet-magic 42
-cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo1.addr) --testnet-magic 42
 
 cardano-cli address build \
 --payment-verification-key-file /app/cardano-node/example/utxo-keys/utxo2.vkey \
 --out-file /app/appdata/wallets/utxo2.addr \
 --testnet-magic 42
-cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo2.addr) --testnet-magic 42
 
 cardano-cli address build \
 --payment-verification-key-file /app/cardano-node/example/utxo-keys/utxo3.vkey \
 --out-file /app/appdata/wallets/utxo3.addr \
 --testnet-magic 42
+
+# Print UTxOs
+cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo1.addr) --testnet-magic 42
+cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo2.addr) --testnet-magic 42
 cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo3.addr) --testnet-magic 42
 ```
+
+These two commands print the necessary information to setup the faucet UI, we use the `utxo1.addr` to send ADA.
 
 ```bash
 cat /app/appdata/wallets/utxo1.addr
 cat /app/cardano-node/example/utxo-keys/utxo1.skey
 ```
 
-copy the skey in the faucet-ui .env file
+copy the `skey` and `addr` in the faucet-ui `.env` file
 ```.env
 NODE_ENV=production
 # cat /app/appdata/wallets/utxo1.addr
@@ -114,5 +117,7 @@ docker compose up -d
 
 # Destroy the stack
 
-docker compose down
+```bash
+docker compose down --remove-orpans
 sudo rm -rf cluster/ kupo/ cluster/ appdata/ dbsync/cexplorer dbsync/postgres tmp/ wallet-db/ blockfrost-backend-ryo/
+```
