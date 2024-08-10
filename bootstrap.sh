@@ -1,43 +1,40 @@
-# Start the stack
+#!/bin/bash
 
-```bash
-cd /opt/local-private-cardano
+# Usage : sudo bash bootstrap.sh
 
-git clone https://github.com/studiowebux/cardano-private-node.git
+set -e
 
 chmod 0600 -R infrastructure-resources/dbsync/config/
 
 docker compose build
+
 cp faucet-ui/.env.example faucet-ui/.env
-# The first time it will fail, this is expected.
+
+docker compose up -d || docker exec -it -w /app/cardano-node/ launcher bash -c "./scripts/babbage/mkfiles.sh"
+
 docker compose up -d
-# Running this command right after it showes failed to start, will setup the required files.
-docker exec -it -w /app/cardano-node/ launcher bash -c "./scripts/babbage/mkfiles.sh"
-# You have more or less 30 seconds to restart the cluster.
-docker compose up -d
-# Everything should show as UP
 docker compose ps -a
 
-# After few seconds this command will show that the chain is synced.
-docker exec -it launcher bash -c "cardano-cli query tip --testnet-magic 42"
 
-# This one the first time will either get stuck or take a very very very long time.
-# DBSync can block the whole thing, as it is a test environemtn I simply restart it to skip the indexes (See youtube video for what it does.)
-docker compose logs cardano-db-sync postgres -f
-docker compose stats
-# You can skip the indexes. Doesn't work everytime the command is ran...
-docker compose restart cardano-db-sync
-```
+max_retries=5 # Should take 3 attempts
+delay=10
+for ((i=1; i<=max_retries; i++)); do
+    if docker exec -it launcher bash -c "cardano-cli query tip --testnet-magic 42"; then
+        break;
+    else
+        echo "Command failed. Attempt $i of $max_retries."
+        if (( i < max_retries )); then
+            echo "Retrying in $delay seconds..."
+            sleep $delay
+        else
+            echo "Failed to validate that the cluster is running."
+        fi
+    fi
+done
 
-# Using your favorite SQL IDE
+docker compose stop cardano-db-sync
 
-```bash
-docker compose run -it postgres psql -d cexplorer -h postgres -U postgres
-```
-
-These commands are provided by blockfrost-RYO:
-
-```sql
+docker compose run -it --rm postgres psql "postgresql://postgres:example@postgres/cexplorer" -c "
 CREATE INDEX IF NOT EXISTS bf_idx_block_hash_encoded ON block USING HASH (encode(hash, 'hex'));
 CREATE INDEX IF NOT EXISTS bf_idx_datum_hash ON datum USING HASH (encode(hash, 'hex'));
 CREATE INDEX IF NOT EXISTS bf_idx_multi_asset_policy ON multi_asset USING HASH (encode(policy, 'hex'));
@@ -56,22 +53,13 @@ CREATE INDEX IF NOT EXISTS bf_idx_ma_tx_mint_ident ON ma_tx_mint USING btree (id
 CREATE INDEX IF NOT EXISTS bf_idx_ma_tx_out_ident ON ma_tx_out USING btree (ident);
 CREATE INDEX IF NOT EXISTS bf_idx_reward_rest_addr_id ON reward_rest USING btree (addr_id);
 CREATE INDEX IF NOT EXISTS bf_idx_reward_rest_spendable_epoch ON reward_rest USING btree (spendable_epoch);
-```
+"
 
-# Get the Address and SKEY for the faucet
+docker compose start cardano-db-sync
 
-launch the bootstrap.sh commands
-
-```bash
-# Open a console in the launcher container
-docker exec -it -w /app/cardano-node/ launcher bash
-
-# Launch the following commands to setup the faucet-ui:
-
-# 1. Check if the cluster is up and running
+docker exec -it -w /app/cardano-node/ launcher bash -c "
 cardano-cli query tip --testnet-magic 42
 
-# Get the Addresses for each keys created by mkfiles.sh
 mkdir -p /app/appdata/wallets/
 
 cardano-cli address build \
@@ -89,33 +77,20 @@ cardano-cli address build \
 --out-file /app/appdata/wallets/utxo3.addr \
 --testnet-magic 42
 
-# Print UTxOs
-cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo1.addr) --testnet-magic 42
-cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo2.addr) --testnet-magic 42
-cardano-cli query utxo --address $(cat /app/appdata/wallets/utxo3.addr) --testnet-magic 42
-```
+cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo1.addr) --testnet-magic 42
+cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo2.addr) --testnet-magic 42
+cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo3.addr) --testnet-magic 42
+"
 
-These two commands print the necessary information to setup the faucet UI, we use the `utxo1.addr` to send ADA from:
-
-```bash
 address=$(sudo cat ./appdata/wallets/utxo1.addr)
 skey=$(sudo cat ./cluster/utxo-keys/utxo1.skey | jq -r '.cborHex[4:]')
 sed -i faucet-ui/.env -e 's/NODE_ENV=development/NODE_ENV=production/'
 sed -i faucet-ui/.env -e "s/GENESIS_ADDRESS=.*/GENESIS_ADDRESS=${address}/"
 sed -i faucet-ui/.env -e "s/GENESIS_PRIVATE_KEY=.*/GENESIS_PRIVATE_KEY=${skey}/"
-```
 
-Must use the up command to reload the environment variables:
-
-```bash
 docker compose up -d
-```
 
----
+echo "* You might have to restart (yes again) the DB Sync container as it hangs the Postgres DB while doing indexes (that we wont use)"
+docker compose restart cardano-db-sync
 
-# Destroy the stack
-
-```bash
-docker compose down --remove-orphans
-sudo rm -rf cluster/ kupo/ cluster/ appdata/ dbsync/cexplorer dbsync/postgres tmp/ wallet-db/ blockfrost-backend-ryo/
-```
+echo "Voila !"
