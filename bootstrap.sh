@@ -4,20 +4,26 @@
 
 set -e
 
+# Change permissions of files in the infrastructure-resources/dbsync/config/ directory.
+# This makes sure that only the owner can read, write, and execute these files.
 chmod 0600 -R infrastructure-resources/dbsync/config/
 
+# Build the Docker images defined in the docker-compose.yml file.
 docker compose build
 
+# Copy an example .env file to the faucet-ui directory. This file will be used by the faucet-ui container.
 cp faucet-ui/.env.example faucet-ui/.env
 
+# Start the containers defined in the docker-compose.yml file in detached mode (in the background).
 docker compose up -d || docker exec -it -w /app/cardano-node/ launcher bash -c "./scripts/babbage/mkfiles.sh"
 
+# Start the Docker containers again. This is because some services might not be ready after the first start command.
 docker compose up -d
 docker compose ps -a
 
-
-max_retries=5 # Should take 3 attempts
-delay=10
+# Check if the cluster is running by querying the tip of the blockchain using cardano-cli.
+max_retries=5 # The script will try 5 times before giving up.
+delay=10 # If a retry is needed, it will wait for 10 seconds.
 for ((i=1; i<=max_retries; i++)); do
     if docker exec -it launcher bash -c "cardano-cli query tip --testnet-magic 42"; then
         break;
@@ -32,8 +38,10 @@ for ((i=1; i<=max_retries; i++)); do
     fi
 done
 
+# Stop the cardano-db-sync container. We'll restart it later after creating some necessary indexes.
 docker compose stop cardano-db-sync
 
+# Create some indexes in the PostgreSQL database used by cardano-db-sync.
 docker compose run -it --rm postgres psql "postgresql://postgres:example@postgres/cexplorer" -c "
 CREATE INDEX IF NOT EXISTS bf_idx_block_hash_encoded ON block USING HASH (encode(hash, 'hex'));
 CREATE INDEX IF NOT EXISTS bf_idx_datum_hash ON datum USING HASH (encode(hash, 'hex'));
@@ -55,8 +63,10 @@ CREATE INDEX IF NOT EXISTS bf_idx_reward_rest_addr_id ON reward_rest USING btree
 CREATE INDEX IF NOT EXISTS bf_idx_reward_rest_spendable_epoch ON reward_rest USING btree (spendable_epoch);
 "
 
+# Start the cardano-db-sync container again.
 docker compose start cardano-db-sync
 
+# In the launcher container, create some wallets and query their UTXO (unspent transaction outputs).
 docker exec -it -w /app/cardano-node/ launcher bash -c "
 cardano-cli query tip --testnet-magic 42
 
@@ -82,12 +92,16 @@ cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo2.addr) --testn
 cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo3.addr) --testnet-magic 42
 "
 
+# Get the address and private key of one of the created wallets.
 address=$(sudo cat ./appdata/wallets/utxo1.addr)
 skey=$(sudo cat ./cluster/utxo-keys/utxo1.skey | jq -r '.cborHex[4:]')
+
+# Update the .env file in the faucet-ui directory with the obtained address and private key.
 sed -i faucet-ui/.env -e 's/NODE_ENV=development/NODE_ENV=production/'
 sed -i faucet-ui/.env -e "s/GENESIS_ADDRESS=.*/GENESIS_ADDRESS=${address}/"
 sed -i faucet-ui/.env -e "s/GENESIS_PRIVATE_KEY=.*/GENESIS_PRIVATE_KEY=${skey}/"
 
+# Start the Docker containers again.
 docker compose up -d
 
 echo "* You might have to restart (yes again) the DB Sync container as it hangs the Postgres DB while doing indexes (that we wont use)"

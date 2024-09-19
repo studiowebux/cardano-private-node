@@ -40,7 +40,7 @@ services:
     container_name: ogmios
     image: cardanosolutions/ogmios:v6.5.0
     ports:
-      - 1337:1337
+      - 1447:1337 # Otherwise it clashes with the real ogmios.
     volumes:
       - ./cluster:/app/cardano-node/example
     command: "--node-socket /app/cardano-node/example/node-spo1/node.sock --node-config /app/cardano-node/example/configuration.yaml --host 0.0.0.0 --include-cbor"
