@@ -138,7 +138,9 @@ services:
 
   # https://blockfrost.dev/api/blockfrost-io-api-documentation
   blockfrost-ryo:
-    image: blockfrost/backend-ryo:v2.2.0
+    # image: blockfrost/backend-ryo:v2.2.0 # 2024-09-22 does not work on nami fork.
+    # Error in /epochs/latest/parameters. Error: Release called on client which has already been released to the pool.
+    image: blockfrost/backend-ryo:v2.1.0
     container_name: blockfrost-ryi
     ports:
       - 3010:3010
