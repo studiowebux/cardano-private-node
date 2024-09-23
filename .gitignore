@@ -2,5 +2,13 @@
 .env
 .env.development
 .env.production
+.env.bck
 node_modules
 __data
+
+!dbsync/config
+
+appdata/
+cluster/
+dbsync/
+wallet-db/

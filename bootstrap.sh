@@ -6,7 +6,7 @@ set -e
 
 # Change permissions of files in the infrastructure-resources/dbsync/config/ directory.
 # This makes sure that only the owner can read, write, and execute these files.
-chmod 0600 -R infrastructure-resources/dbsync/config/
+chmod -R 0700 infrastructure-resources/dbsync/config/
 
 # Build the Docker images defined in the docker-compose.yml file.
 docker compose build
@@ -39,7 +39,7 @@ for ((i=1; i<=max_retries; i++)); do
 done
 
 # Stop the cardano-db-sync container. We'll restart it later after creating some necessary indexes.
-docker compose stop cardano-db-sync
+# docker compose stop cardano-db-sync
 
 # Create some indexes in the PostgreSQL database used by cardano-db-sync.
 docker compose run -it --rm postgres psql "postgresql://postgres:example@postgres/cexplorer" -c "
@@ -96,10 +96,21 @@ cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo3.addr) --testn
 address=$(sudo cat ./appdata/wallets/utxo1.addr)
 skey=$(sudo cat ./cluster/utxo-keys/utxo1.skey | jq -r '.cborHex[4:]')
 
+case "$OSTYPE" in
+  darwin*|bsd*)
+    echo "Using BSD sed style"
+    sed_no_backup=( -i '.bck' )
+    ;;
+  *)
+    echo "Using GNU sed style"
+    sed_no_backup=( -i )
+    ;;
+esac
+
 # Update the .env file in the faucet-ui directory with the obtained address and private key.
-sed -i faucet-ui/.env -e 's/NODE_ENV=development/NODE_ENV=production/'
-sed -i faucet-ui/.env -e "s/GENESIS_ADDRESS=.*/GENESIS_ADDRESS=${address}/"
-sed -i faucet-ui/.env -e "s/GENESIS_PRIVATE_KEY=.*/GENESIS_PRIVATE_KEY=${skey}/"
+sed ${sed_no_backup[@]} -e 's/NODE_ENV=development/NODE_ENV=production/' faucet-ui/.env
+sed ${sed_no_backup[@]} -e "s/GENESIS_ADDRESS=.*/GENESIS_ADDRESS=${address}/" faucet-ui/.env
+sed ${sed_no_backup[@]} -e "s/GENESIS_PRIVATE_KEY=.*/GENESIS_PRIVATE_KEY=${skey}/" faucet-ui/.env
 
 # Start the Docker containers again.
 docker compose up -d
