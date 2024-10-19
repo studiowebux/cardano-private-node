@@ -5,16 +5,16 @@ WORKDIR /app
 
 RUN apt update && apt install curl git jq xxd vim xz-utils unzip conntrack net-tools -y
 
-RUN curl -OL https://github.com/IntersectMBO/cardano-node/releases/download/9.2.0/cardano-node-9.2.0-linux.tar.gz && \
-    tar xvzf cardano-node-9.2.0-linux.tar.gz && \
-    rm -f cardano-node-9.2.0-linux.tar.gz
+RUN curl -OL https://github.com/IntersectMBO/cardano-node/releases/download/9.2.1/cardano-node-9.2.1-linux.tar.gz && \
+    tar xvzf cardano-node-9.2.1-linux.tar.gz && \
+    rm -f cardano-node-9.2.1-linux.tar.gz
 
 RUN ln -s /app/bin/cardano-cli /usr/local/bin/cardano-cli && \
     ln -s /app/bin/cardano-node /usr/local/bin/cardano-node
 
 RUN git clone https://github.com/IntersectMBO/cardano-node.git && \
     cd cardano-node && \
-    git checkout 9.2.0
+    git checkout 9.2.1
 
 RUN echo 'byronGenesisHash=$(cardano-cli byron genesis print-genesis-hash --genesis-json ./example/genesis/byron/genesis.json)' >> cardano-node/scripts/babbage/mkfiles.sh &&\
     echo 'echo "ByronGenesisHash: $byronGenesisHash" >> ./example/configuration.yaml' >> cardano-node/scripts/babbage/mkfiles.sh

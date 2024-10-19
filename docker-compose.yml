@@ -103,27 +103,28 @@ services:
     # entrypoint: bash -c "sleep Infinity"
     command: "--pg-pass-env POSTGRES_PASS --config /app/config/db-sync-config.json --socket-path /app/cardano-node/example/node-spo1/node.sock"
 
-  cardano-wallet:
-    container_name: cardano-wallet
-    image: cardanofoundation/cardano-wallet:2024.9.3
-    volumes:
-      - ./wallet-db:/wallet-db
-      - ./cluster:/app/cardano-node/example
-    ports:
-      - 8090:8090
-    entrypoint: []
-    command: bash -c "$$CMD --testnet /app/cardano-node/example/genesis/byron/genesis.json"
-    environment:
-      CMD: "cardano-wallet serve --node-socket /app/cardano-node/example/node-spo1/node.sock --database /wallet-db --listen-address 0.0.0.0"
-      NETWORK:
-    # user: ${USER_ID}
-    restart: on-failure
-    logging:
-      driver: "json-file"
-      options:
-        compress: "true"
-        max-file: "10"
-        max-size: "50m"
+  # if needed
+  # cardano-wallet:
+  #   container_name: cardano-wallet
+  #   image: cardanofoundation/cardano-wallet:2024.9.3
+  #   volumes:
+  #     - ./wallet-db:/wallet-db
+  #     - ./cluster:/app/cardano-node/example
+  #   ports:
+  #     - 8090:8090
+  #   entrypoint: []
+  #   command: bash -c "$$CMD --testnet /app/cardano-node/example/genesis/byron/genesis.json"
+  #   environment:
+  #     CMD: "cardano-wallet serve --node-socket /app/cardano-node/example/node-spo1/node.sock --database /wallet-db --listen-address 0.0.0.0"
+  #     NETWORK:
+  #   # user: ${USER_ID}
+  #   restart: on-failure
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       compress: "true"
+  #       max-file: "10"
+  #       max-size: "50m"
 
   submit-api:
     container_name: submit-api
@@ -140,7 +141,8 @@ services:
   blockfrost-ryo:
     # image: blockfrost/backend-ryo:v2.2.0 # 2024-09-22 does not work on nami fork.
     # Error in /epochs/latest/parameters. Error: Release called on client which has already been released to the pool.
-    image: blockfrost/backend-ryo:v2.1.0
+    # image: blockfrost/backend-ryo:v2.2.2 # 2024-10-19 error still present, but NAMI seems to be ok.
+    image: blockfrost/backend-ryo:v2.2.2
     container_name: blockfrost-ryi
     ports:
       - 3010:3010

@@ -11,20 +11,24 @@ Additionally, I tested and updated a fork of the NAMI wallet to ensure a working
 
 ## Components (Tested)
 
-- Cardano node 9.1.0 (Conway era)
-- Ogmios v6.5.0
-- Kupo v2.9.0
+- Cardano node 9.2.1
+- Ogmios v6.8.0
 - Postgres 14.10
-- DB Sync 12.3.0.0 (and 13.2.0.2)
-- Cardano Wallet 2024.7.19 (the wallet-ui is to interface with this, didn't test after setting up NAMI)
+- DB Sync 13.5.0.2
 - Submit API
-- Blockfrost RYO v2.1.0
+- Blockfrost RYO v2.2.2
 
-- Faucet-UI (maintained)
+- Faucet-UI (maintained) - http://localhost:8002/
 - Wallet-UI (Don't really need it anymore)
 - token-registry it is a placeholder API for NAMI
 
 - NAMI Fork: https://github.com/studiowebux/nami (You will have to change the IP to fit your setup, see bottom of the readme for the steps.)
+
+## Blockfrost API Endpoints
+
+- http://localhost:3010/blocks/latest
+- http://localhost:3010/addresses/addr_test1qqx93zaarmlqwv5ptslvaclyxt3kke2296kpaf6vfkz87kyzgpt30akcklt630wjw4cqzc253k6ud63c5kh9jexldmvs0h7dq6/utxos
+- http://localhost:3010/epochs/latest/parameters
 
 ## Contribution
 
