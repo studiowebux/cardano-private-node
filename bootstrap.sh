@@ -25,7 +25,7 @@ docker compose ps -a
 max_retries=5 # The script will try 5 times before giving up.
 delay=10 # If a retry is needed, it will wait for 10 seconds.
 for ((i=1; i<=max_retries; i++)); do
-    if docker exec -it launcher bash -c "cardano-cli query tip --testnet-magic 42"; then
+    if docker exec -it launcher bash -c "cardano-cli latest query tip --testnet-magic 42"; then
         break;
     else
         echo "Command failed. Attempt $i of $max_retries."
@@ -39,7 +39,8 @@ for ((i=1; i<=max_retries; i++)); do
 done
 
 # Stop the cardano-db-sync container. We'll restart it later after creating some necessary indexes.
-# docker compose stop cardano-db-sync
+# Otherwise it blocks everything.
+docker compose stop cardano-db-sync
 
 # Create some indexes in the PostgreSQL database used by cardano-db-sync.
 docker compose run -it --rm postgres psql "postgresql://postgres:example@postgres/cexplorer" -c "
@@ -68,7 +69,7 @@ docker compose start cardano-db-sync
 
 # In the launcher container, create some wallets and query their UTXO (unspent transaction outputs).
 docker exec -it -w /app/cardano-node/ launcher bash -c "
-cardano-cli query tip --testnet-magic 42
+cardano-cli latest query tip --testnet-magic 42
 
 mkdir -p /app/appdata/wallets/
 
@@ -87,9 +88,9 @@ cardano-cli address build \
 --out-file /app/appdata/wallets/utxo3.addr \
 --testnet-magic 42
 
-cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo1.addr) --testnet-magic 42
-cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo2.addr) --testnet-magic 42
-cardano-cli query utxo --address \$(cat /app/appdata/wallets/utxo3.addr) --testnet-magic 42
+cardano-cli latest query utxo --address \$(cat /app/appdata/wallets/utxo1.addr) --testnet-magic 42
+cardano-cli latest query utxo --address \$(cat /app/appdata/wallets/utxo2.addr) --testnet-magic 42
+cardano-cli latest query utxo --address \$(cat /app/appdata/wallets/utxo3.addr) --testnet-magic 42
 "
 
 # Get the address and private key of one of the created wallets.
