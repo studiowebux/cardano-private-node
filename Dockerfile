@@ -5,16 +5,16 @@ WORKDIR /app
 
 RUN apt update && apt install curl git jq xxd vim xz-utils unzip conntrack net-tools -y
 
-RUN curl -OL https://github.com/IntersectMBO/cardano-node/releases/download/9.2.1/cardano-node-9.2.1-linux.tar.gz && \
-    tar xvzf cardano-node-9.2.1-linux.tar.gz && \
-    rm -f cardano-node-9.2.1-linux.tar.gz
+RUN curl -OL https://github.com/IntersectMBO/cardano-node/releases/download/10.1.1/cardano-node-10.1.1-linux.tar.gz && \
+    tar xvzf cardano-node-10.1.1-linux.tar.gz && \
+    rm -f cardano-node-10.1.1-linux.tar.gz
 
 RUN ln -s /app/bin/cardano-cli /usr/local/bin/cardano-cli && \
     ln -s /app/bin/cardano-node /usr/local/bin/cardano-node
 
 RUN git clone https://github.com/IntersectMBO/cardano-node.git && \
     cd cardano-node && \
-    git checkout 9.2.1
+    git checkout 10.1.1
 
 RUN echo 'byronGenesisHash=$(cardano-cli byron genesis print-genesis-hash --genesis-json ./example/genesis/byron/genesis.json)' >> cardano-node/scripts/babbage/mkfiles.sh &&\
     echo 'echo "ByronGenesisHash: $byronGenesisHash" >> ./example/configuration.yaml' >> cardano-node/scripts/babbage/mkfiles.sh
@@ -31,9 +31,9 @@ RUN echo 'shelleyGenesisHash=$(cardano-cli genesis hash --genesis ./example/gene
 
 # https://cardano-foundation.github.io/cardano-wallet/user
 # https://cardano-foundation.github.io/cardano-wallet/api/edge/
-RUN curl -OL https://github.com/cardano-foundation/cardano-wallet/releases/download/v2024-09-03/cardano-wallet-v2024-09-03-linux64.tar.gz && \
-    tar xvzf cardano-wallet-v2024-09-03-linux64.tar.gz && \
-    rm -rf cardano-wallet-v2024-09-03-linux64.tar.gz
+RUN curl -OL https://github.com/cardano-foundation/cardano-wallet/releases/download/v2024-09-29/cardano-wallet-v2024-09-29-linux64.tar.gz && \
+    tar xvzf cardano-wallet-v2024-09-29-linux64.tar.gz && \
+    rm -rf cardano-wallet-v2024-09-29-linux64.tar.gz
 
 RUN curl -fsSL https://deno.land/install.sh | sh
 ENV DENO_INSTALL="/root/.deno"

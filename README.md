@@ -11,12 +11,12 @@ Additionally, I tested and updated a fork of the NAMI wallet to ensure a working
 
 ## Components (Tested)
 
-- Cardano node 9.2.1
+- Cardano node 10.1.1
 - Ogmios v6.8.0
 - Postgres 14.10
 - DB Sync 13.5.0.2
 - Submit API
-- Blockfrost RYO v2.2.2
+- Blockfrost RYO v2.2.4
 
 - Faucet-UI (maintained) - http://localhost:8002/
 - Wallet-UI (Don't really need it anymore)
