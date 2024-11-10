@@ -38,12 +38,12 @@ services:
 
   ogmios:
     container_name: ogmios
-    image: cardanosolutions/ogmios:v6.8.0
+    image: cardanosolutions/ogmios:v6.9.0
     ports:
-      - 1447:1337 # Otherwise it clashes with the real ogmios.
+      - 1447:1447
     volumes:
       - ./cluster:/app/cardano-node/example
-    command: "--node-socket /app/cardano-node/example/node-spo1/node.sock --node-config /app/cardano-node/example/configuration.yaml --host 0.0.0.0 --include-cbor"
+    command: "--node-socket /app/cardano-node/example/node-spo1/node.sock --node-config /app/cardano-node/example/configuration.yaml --host 0.0.0.0 --include-cbor --port 1447"
 
   # # If needed, adjust the match pattern
   # kupo:
@@ -177,3 +177,17 @@ services:
     env_file: ./faucet-ui/.env
     ports:
       - 8002:8002
+# 2024-11-10 : Too many issues related to configuration mismatch.
+# dolos:
+#   container_name: dolos
+#   image: ghcr.io/txpipe/dolos:latest
+#   restart: unless-stopped
+#   ports:
+#     - 50051:50051
+#     - 30031:30031
+#   volumes:
+#     - ./cluster:/app/cardano-node/example:ro # share configurations
+#     - ./infrastructure-resources/dolos/daemon.toml:/etc/dolos/daemon.toml:ro
+#     - ./infrastructure-resources/dolos/socket/:/socket/ # share dolos.socket
+#     - ./infrastructure-resources/dolos/data/:/data/ # dolos data
+#   command: ["daemon"]
