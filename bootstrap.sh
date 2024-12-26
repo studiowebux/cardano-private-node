@@ -39,7 +39,6 @@ for ((i=1; i<=max_retries; i++)); do
 done
 
 # Stop the cardano-db-sync container. We'll restart it later after creating some necessary indexes.
-# Otherwise it blocks everything.
 docker compose stop cardano-db-sync
 
 # Create some indexes in the PostgreSQL database used by cardano-db-sync.

@@ -38,7 +38,7 @@ services:
 
   ogmios:
     container_name: ogmios
-    image: cardanosolutions/ogmios:v6.9.0
+    image: cardanosolutions/ogmios:v6.10.0
     ports:
       - 1447:1447
     volumes:
@@ -79,7 +79,7 @@ services:
     command: ${POSTGRES_ARGS:--c maintenance_work_mem=8GB -c max_parallel_maintenance_workers=8}
 
   cardano-db-sync:
-    image: ghcr.io/intersectmbo/cardano-db-sync:13.5.0.2
+    image: ghcr.io/intersectmbo/cardano-db-sync:13.6.0.4
     container_name: dbsync
     environment:
       - DISABLE_LEDGER=false
@@ -106,7 +106,7 @@ services:
   # if needed
   # cardano-wallet:
   #   container_name: cardano-wallet
-  #   image: cardanofoundation/cardano-wallet:2024.9.3
+  #   image: cardanofoundation/cardano-wallet:2024.11.18
   #   volumes:
   #     - ./wallet-db:/wallet-db
   #     - ./cluster:/app/cardano-node/example
@@ -177,17 +177,3 @@ services:
     env_file: ./faucet-ui/.env
     ports:
       - 8002:8002
-# 2024-11-10 : Too many issues related to configuration mismatch.
-# dolos:
-#   container_name: dolos
-#   image: ghcr.io/txpipe/dolos:latest
-#   restart: unless-stopped
-#   ports:
-#     - 50051:50051
-#     - 30031:30031
-#   volumes:
-#     - ./cluster:/app/cardano-node/example:ro # share configurations
-#     - ./infrastructure-resources/dolos/daemon.toml:/etc/dolos/daemon.toml:ro
-#     - ./infrastructure-resources/dolos/socket/:/socket/ # share dolos.socket
-#     - ./infrastructure-resources/dolos/data/:/data/ # dolos data
-#   command: ["daemon"]
